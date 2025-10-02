@@ -1,4 +1,4 @@
-module sso
+module github.com/Deymos01/sso
 
 go 1.24
 
