@@ -24,6 +24,7 @@ type Auth interface {
 		password string,
 	) (userID int64, err error)
 	IsAdmin(ctx context.Context, userID int64) (bool, error)
+	RegisterNewApp(ctx context.Context, name string, secret string) (int64, error)
 }
 
 type serverAPI struct {
@@ -80,7 +81,7 @@ func (s *serverAPI) IsAdmin(ctx context.Context, req *ssov1.IsAdminRequest) (*ss
 		return nil, err
 	}
 
-	isAdmin, err := s.auth.IsAdmin(ctx, req.UserId)
+	isAdmin, err := s.auth.IsAdmin(ctx, req.GetUserId())
 	if err != nil {
 		if errors.Is(err, auth.ErrUserNotFound) {
 			return nil, status.Error(codes.NotFound, "user not found")
@@ -91,6 +92,19 @@ func (s *serverAPI) IsAdmin(ctx context.Context, req *ssov1.IsAdminRequest) (*ss
 	return &ssov1.IsAdminResponse{
 		IsAdmin: isAdmin,
 	}, nil
+}
+
+func (s *serverAPI) CreateApp(ctx context.Context, req *ssov1.CreateAppRequest) (*ssov1.CreateAppResponse, error) {
+	if err := validateCreateApp(req); err != nil {
+		return nil, err
+	}
+
+	appID, err := s.auth.RegisterNewApp(ctx, req.GetName(), req.GetSecret())
+	if err != nil {
+		return nil, status.Error(codes.Internal, "internal error")
+	}
+
+	return &ssov1.CreateAppResponse{AppId: appID}, nil
 }
 
 func validateLogin(req *ssov1.LoginRequest) error {
@@ -120,6 +134,16 @@ func validateRegister(req *ssov1.RegisterRequest) error {
 func validateIsAdmin(req *ssov1.IsAdminRequest) error {
 	if req.GetUserId() == emptyValue {
 		return status.Error(codes.InvalidArgument, "user_id is required")
+	}
+	return nil
+}
+
+func validateCreateApp(req *ssov1.CreateAppRequest) error {
+	if req.GetName() == "" {
+		return status.Error(codes.InvalidArgument, "app name is required")
+	}
+	if req.GetSecret() == "" {
+		return status.Error(codes.InvalidArgument, "app secret is required")
 	}
 	return nil
 }

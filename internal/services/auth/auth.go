@@ -37,6 +37,7 @@ type UserProvider interface {
 
 type AppProvider interface {
 	App(ctx context.Context, appID int) (models.App, error)
+	CreateApp(ctx context.Context, name string, secret string) (int64, error)
 }
 
 var (
@@ -176,4 +177,22 @@ func (a *Auth) IsAdmin(ctx context.Context, userID int64) (bool, error) {
 	log.Info("checked if user is admin", slog.Bool("is_admin", isAdmin))
 
 	return isAdmin, nil
+}
+
+// RegisterNewApp creates app with unique id.
+func (a *Auth) RegisterNewApp(ctx context.Context, name string, secret string) (int64, error) {
+	const op = "Auth.RegisterNewApp"
+
+	log := a.log.With(slog.String("op", op))
+
+	log.Info("registering new app")
+
+	appID, err := a.appProvider.CreateApp(ctx, name, secret)
+	if err != nil {
+		return 0, fmt.Errorf("%s: %w", op, err)
+	}
+
+	log.Info("registered app with id ", slog.Int64("app_id", appID))
+
+	return appID, nil
 }

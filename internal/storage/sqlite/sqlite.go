@@ -123,3 +123,26 @@ func (s *Storage) App(ctx context.Context, id int) (models.App, error) {
 
 	return app, nil
 }
+
+// CreateApp creates app and returns its unique id.
+func (s *Storage) CreateApp(ctx context.Context, name string, secret string) (int64, error) {
+	const op = "storage.sqlite.CreateApp"
+
+	stmt, err := s.db.Prepare("INSERT INTO apps(name, secret) VALUES (?, ?)")
+	if err != nil {
+		return 0, fmt.Errorf("%s: %w", op, err)
+	}
+	defer stmt.Close()
+
+	res, err := stmt.ExecContext(ctx, name, secret)
+	if err != nil {
+		return 0, fmt.Errorf("%s: %w", op, err)
+	}
+
+	id, err := res.LastInsertId()
+	if err != nil {
+		return 0, fmt.Errorf("%s: failed to get last insert id: %w", op, err)
+	}
+
+	return id, nil
+}
