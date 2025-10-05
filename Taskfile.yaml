@@ -1,0 +1,17 @@
+# See: https://taskfile.dev/docs/
+
+version: "3"
+
+tasks:
+  migrate:
+    aliases:
+      - mig
+    desc: "Start migrations"
+    cmds:
+      - go run ./cmd/migrator/ --storage-path=./storage/sso.db --migrations-path=./migrations/
+  start-app:
+    aliases:
+      - start
+    desc: "Start application"
+    cmds:
+      - go run ./cmd/sso/main.go --config=./config/local.yaml

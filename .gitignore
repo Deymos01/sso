@@ -1,2 +1,3 @@
 .idea/
-sso/config/local.yaml
+/config/local.yaml
+/storage/
